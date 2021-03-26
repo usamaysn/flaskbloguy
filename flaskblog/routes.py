@@ -4,7 +4,7 @@ import concurrent.futures
 import secrets
 from PIL import Image
 from flask import render_template, url_for, flash, redirect, request, abort
-from flaskblog import app, db, bcrypt, mail
+from flaskblog import app, db, mail, bcrypt
 from flaskblog.forms import (RegistrationForm, LoginForm, UpdateAccountForm,
                              PostForm, RequestResetForm, ResetPasswordForm)
 from flaskblog.models import User, Post,Limiteuser
@@ -22,6 +22,7 @@ admin = Admin(app)
 admin.add_view(ModelView(Limiteuser, db.session))
 @app.route("/")
 @app.route("/home")
+@login_required
 def home():
     page = request.args.get('page', 1, type=int)
     posts = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=5)
@@ -29,6 +30,7 @@ def home():
 
 
 @app.route("/about")
+@login_required
 def about():
     return render_template('about.html', title='About')
 
@@ -39,6 +41,7 @@ def register():
         return redirect(url_for('home'))
     form = RegistrationForm()
     if form.validate_on_submit():
+        
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         user = User(username=form.username.data, email=form.email.data, password=hashed_password)
         db.session.add(user)
@@ -77,10 +80,14 @@ def login():
             flash('Login Unsuccessful. Please check email and password', 'danger')
     return render_template('login.html', title='Login', form=form)
 
+
 @app.route("/logout")
 def logout():
+    result = Limiteuser.query.filter_by(user=current_user.id).first()
+    db.session.delete(result)
+    db.session.commit()
     logout_user()
-    return redirect(url_for('home'))
+    return redirect(url_for('login'))
 
 
 def save_picture(form_picture):
@@ -133,6 +140,7 @@ def new_post():
 
 
 @app.route("/post/<int:post_id>")
+@login_required
 def post(post_id):
     post = Post.query.get_or_404(post_id)
     return render_template('post.html', title=post.title, post=post)
@@ -172,6 +180,7 @@ def delete_post(post_id):
 
 
 @app.route("/user/<string:username>")
+@login_required
 def user_posts(username):
     page = request.args.get('page', 1, type=int)
     user = User.query.filter_by(username=username).first_or_404()
@@ -223,6 +232,7 @@ def reset_token(token):
         return redirect(url_for('login'))
     return render_template('reset_token.html', title='Reset Password', form=form)
 
+
 @app.route('/get_post_json/', methods=['POST'])
 def get_post_json():    
     data = request.get_json()
@@ -234,3 +244,4 @@ def get_post_json():
     user= User.query.get(1)
     print(user)
     return ""
+
