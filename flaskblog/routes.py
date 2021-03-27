@@ -58,7 +58,7 @@ def login():
         increment = 0
         for value in value:
             increment+=1
-        if increment>=10: # here is the limit of the users. if you want to decrease or increase the limit, then increase/decrease the 10
+        if increment>=20: # here is the limit of the users. if you want to decrease or increase the limit, then increase/decrease the 10
             return redirect("/")
     if current_user.is_authenticated:
         
