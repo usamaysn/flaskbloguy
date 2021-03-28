@@ -2,6 +2,7 @@ import os
 import time
 import concurrent.futures
 import secrets
+import datetime
 from PIL import Image
 from flask import render_template, url_for, flash, redirect, request, abort, session
 from flaskblog import app, db, mail, bcrypt
@@ -24,19 +25,25 @@ admin.add_view(ModelView(Limiteuser, db.session))
 @app.route("/home")
 @login_required
 def home():
+
     page = request.args.get('page', 1, type=int)
     posts = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=5)
     return render_template('home.html', posts=posts)
 
 
-@app.route("/about")
+@app.route("/status")
 @login_required
 def about():
-    return render_template('about.html', title='About')
+    return render_template('status.html', title='Status')
+
+
+
 
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
+    x=datetime.datetime.now()
+
     if current_user.is_authenticated:
         return redirect(url_for('home'))
     form = RegistrationForm()
@@ -48,22 +55,24 @@ def register():
         db.session.commit()
         flash('Your account has been created! You are now able to log in', 'success')
         return redirect(url_for('login'))
-    return render_template('register.html', title='Register', form=form)
+    return render_template('register.html', title='Register', form=form, x=x)
 
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
 
-    session.pop('user_id', None)
+    x=datetime.datetime.now()
+    #session.permanent = True
     value = Limiteuser.query.all()
     if value:
         increment = 0
         for value in value:
             increment+=1
-        if increment>=1: # here is the limit of the users. if you want to decrease or increase the limit, then increase/decrease the 10
+        if increment>=2: # here is the limit of the users. if you want to decrease or increase the limit, then increase/decrease the 10
+            
             flash('At capacity. Please try again later', 'danger')
-            #return redirect("/")
-            return render_template('about.html', title='About')
+            
+            return render_template('status.html', title='Status')
     if current_user.is_authenticated:
         
     #**************************
@@ -85,7 +94,7 @@ def login():
 
         else:
             flash('Login Unsuccessful. Please check email and password', 'danger')
-    return render_template('login.html', title='Login', form=form)
+    return render_template('login.html', title='Login', form=form, x=x)
 
 
 @app.route("/logout")
@@ -135,6 +144,7 @@ def account():
 @app.route("/post/new", methods=['GET', 'POST'])
 @login_required
 def new_post():
+    x=datetime.datetime.now()
     form = PostForm()
     if form.validate_on_submit():
         post = Post(title=form.title.data, content=form.content.data, author=current_user)
@@ -143,7 +153,7 @@ def new_post():
         flash('Your post has been created!', 'success')
         return redirect(url_for('home'))
     return render_template('create_post.html', title='New Post',
-                           form=form, legend='New Post')
+                           form=form, legend='New Post', x=x)
 
 
 @app.route("/post/<int:post_id>")

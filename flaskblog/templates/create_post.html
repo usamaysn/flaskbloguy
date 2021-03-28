@@ -1,6 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="content-section">
+    {{x.strftime('%S')}}<a class="ml-2" >Seconds</a>
     <form method="POST" action="">
         {{ form.hidden_tag() }}
         <fieldset class="form-group">
