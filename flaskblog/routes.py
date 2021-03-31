@@ -3,6 +3,7 @@ import time
 import concurrent.futures
 import secrets
 import datetime
+import timing
 from PIL import Image
 from flask import render_template, url_for, flash, redirect, request, abort, session
 from flaskblog import app, db, mail, bcrypt
@@ -42,7 +43,10 @@ def about():
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
+
+
     x=datetime.datetime.now()
+
 
     if current_user.is_authenticated:
         return redirect(url_for('home'))
@@ -58,32 +62,25 @@ def register():
     return render_template('register.html', title='Register', form=form, x=x)
 
 
+
 @app.route("/login", methods=['GET', 'POST'])
 def login():
-
     x=datetime.datetime.now()
-    #session.permanent = True
     value = Limiteuser.query.all()
     if value:
         increment = 0
         for value in value:
             increment+=1
-        if increment>=20: # here is the limit of the users. if you want to decrease or increase the limit, then increase/decrease the 10
-            
-            flash('At capacity. Please try again later', 'danger')
-            
-            return render_template('status.html', title='Status')
+        if increment>=10(): # here is the limit of the users. if you want to decrease or increase the limit
+            return redirect("/")
     if current_user.is_authenticated:
         
     #**************************
         return redirect(url_for('home'))
     form = LoginForm()
     if form.validate_on_submit():
-        
         user = User.query.filter_by(email=form.email.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data):
-
-            
         
             login_user(user, remember=form.remember.data)
             incre =Limiteuser(inc=1, user=current_user.id)
